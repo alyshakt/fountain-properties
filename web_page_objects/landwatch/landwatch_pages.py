@@ -1,5 +1,6 @@
 """Created October 17th, 2020 by Alysha Kester-Terry https://github.com/alyshakt
 """
+import csv
 import datetime
 import time
 from functools import reduce
@@ -169,35 +170,61 @@ class LandwatchSearchPage(BasePage):
             # Get Link
             link = results_links[i]
             link_text = link.get_attribute('href')
-            results_dict.append(
-                {"listing": {"price": float_price, "acres": acres, "location": city_state, "county": county,
-                             "detail": detail_text,
-                             "link": link_text}})
+            results_dict.append({"listing": {
+                "price": float_price,
+                "acres": acres,
+                "location": city_state,
+                "county": county,
+                "detail": detail_text,
+                "link": link_text
+            }
+            })
             i += 1
         print('{}'.format(results_dict))
         return results_dict
 
-    def get_optimal_results(self, wanted_county=None):
+    def get_optimal_results(self, threshold_factor=0.1, wanted_county=None):
         result_list = self.get_results_json()
         to_return_list = list()
-        average_price = calculate_average_price(result_list)
-        print('The average price is: {}'.format(average_price))
-        average_acreage = calculate_average_acres(result_list)
-        print('The average acreage is: {}'.format(average_acreage))
-        for result in result_list:
-            this_listing = result['listing']
-            acreage = this_listing['acres']
-            pricing = this_listing['price']
-            detail = this_listing['detail']
-            county = this_listing['county'].lower()
-            if acreage >= average_acreage and pricing <= average_price:
-                print('This listing has more than average acreage at less than average cost: {}'.format(this_listing))
-                if wanted_county is not None and wanted_county.lower() in county:
-                    if detail is None or 'mining' not in detail:
-                        to_return_list.append(result)
-                else:
-                    if detail is None or 'mining' not in detail:
-                        to_return_list.append(result)
-            if to_return_list is None:
-                print('There are no optimal parcels! Too bad.')
+        if len(result_list) > 0:
+            average_price = calculate_average_price(result_list)
+            print('The average price is: {}'.format(average_price))
+            average_acreage = calculate_average_acres(result_list)
+            print('The average acreage is: {}'.format(average_acreage))
+            lower_threshold_acreage_avg = average_acreage - (average_acreage * threshold_factor)
+            upper_threshold_price_avg = average_price + (average_price * threshold_factor)
+            for result in result_list:
+                this_listing = result['listing']
+                acreage = this_listing['acres']
+                pricing = this_listing['price']
+                detail = this_listing['detail']
+                county = this_listing['county'].lower()
+                if acreage >= lower_threshold_acreage_avg and pricing <= upper_threshold_price_avg:
+                    print(
+                        'This listing has more than average acreage at less than average cost: {}'.format(this_listing))
+                    if wanted_county is not None and wanted_county.lower() in county:
+                        if detail is None or 'mining' not in detail:
+                            to_return_list.append(result)
+                    else:
+                        if detail is None or 'mining' not in detail:
+                            to_return_list.append(result)
+        if to_return_list is None or len(result_list) < 1:
+            print('There are no optimal parcels or no search results! Too bad.')
         return to_return_list
+
+    def write_to_csv(self, file_name, result_list):
+        listing_data = result_list
+        print(listing_data)
+        with open(file_name, mode='w') as csvfile:
+            writer = csv.writer(csvfile,
+                                dialect='excel',
+                                quotechar='"',
+                                quoting=csv.QUOTE_MINIMAL)
+            count = 0
+            for listing in listing_data:
+                if count == 0:
+                    header = listing['listing'].keys()
+                    writer.writerow(header)
+                    count += 1
+                writer.writerow(listing['listing'].values())
+        csvfile.close()

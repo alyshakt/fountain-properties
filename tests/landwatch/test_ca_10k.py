@@ -21,7 +21,7 @@ def test_ca_under_10k(record_xml_attribute):
     driver = webdriver.Firefox(options=options)
 
     # Define the SearchEngineType and the page object
-    web_app_setup.navigate_to_site(driver, SiteToScrape.landwatch, 'ca')
+    web_app_setup.go_to_landwatch_search(driver, SiteToScrape.landwatch, 'ca', 5, max_price=6000)
     search_page = LandwatchSearchPage(driver)
     base_page = BasePage(driver)
 
@@ -32,6 +32,7 @@ def test_ca_under_10k(record_xml_attribute):
         optimal_results_list = search_page.get_optimal_results()
         screenshots.take_screenshot(driver, 'CAland')
         print('We found {} optimal listings to consider {}:'.format(len(optimal_results_list), optimal_results_list))
+        search_page.write_to_csv('test-reports/CA_GT5ACRES_LT6k.csv', optimal_results_list)
     except (BaseException, Exception) as failure:
         fail = failure
         print('!!!!! The test failed. {}'.format(fail))
