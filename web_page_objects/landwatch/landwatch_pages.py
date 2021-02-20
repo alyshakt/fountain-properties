@@ -192,14 +192,12 @@ class LandwatchSearchPage(BasePage):
             county = this_listing['county'].lower()
             if acreage >= average_acreage and pricing <= average_price:
                 print('This listing has more than average acreage at less than average cost: {}'.format(this_listing))
-                if 'mining' not in detail:
-                    if wanted_county is not None:
-                        if wanted_county.lower() in county:
-                            to_return_list.append(result)
-                    else:
+                if wanted_county is not None and wanted_county.lower() in county:
+                    if detail is None or 'mining' not in detail:
                         to_return_list.append(result)
                 else:
-                    print('Looks like this is for mining rights :( {}'.format(result))
-        if to_return_list is None:
-            print('There are no optimal parcels! Too bad.')
+                    if detail is None or 'mining' not in detail:
+                        to_return_list.append(result)
+            if to_return_list is None:
+                print('There are no optimal parcels! Too bad.')
         return to_return_list

@@ -29,4 +29,4 @@ def navigate_to_site(driver, SiteToScrape, search_area='any'):
             new_url = link + 'california-land-for-sale/'
         else:
             new_url = link + 'land'
-        driver.get(new_url + '/price-under-10000/acres-over-5/available/sort-price-acres-low-high')
+        driver.get(new_url + '/price-1000-10000/acres-over-5/available/sort-price-acres-low-high')
